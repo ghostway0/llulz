@@ -7,7 +7,7 @@ def chunk_text(
     text: str,
     max_tokens: int = 300,
     overlap_tokens: int = 50,
-) -> Iterator[str]:
+) -> str:
     def count_tokens(s: str):
         return len(s.split())
 

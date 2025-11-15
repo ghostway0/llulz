@@ -1,5 +1,6 @@
 from typing import Callable, Any
 from llm import LLM
+from pathlib import Path
 import os, importlib.util
 
 class PluginDirectory:
@@ -36,22 +37,47 @@ class PluginDirectory:
         else:
             return self.loaded[name]
 
-def register_all_for(plugin_dir: PluginDirectory, path: str):
-    for filename in os.listdir(path):
-        filepath = os.path.abspath(os.path.join(path, filename))
-        if not filepath.startswith(os.path.abspath(path)):
+def register_all_for(plugin_dir: PluginDirectory, path: Path):
+    path = path.resolve()  # absolute path
+    for file in path.iterdir():
+        filepath = file.resolve()
+        if not str(filepath).startswith(str(path)):
             raise ValueError("Plugin outside allowed path")
 
-        if os.path.isfile(filepath):
-            plugin_dir.register(filename[:filename.rfind(".")], filepath)
+        if file.is_file() and file.suffix == ".py":
+            plugin_dir.register(file.stem, filepath)
 
 class Config:
     def __init__(self, path: str):
-        self.path = path
+        self.path = Path(path)
+        self.plugins_dir = self.path / "plugins"
+        self.models_dir = self.path / "models"
+        self.run_dir = Path.cwd()
+        
         self.plugins = PluginDirectory("plugins", self)
         self.models = PluginDirectory("models", self)
-        self.plugins_dir = os.path.join(self.path, "plugins")
-        self.models_dir = os.path.join(self.path, "models")
-        
+
         register_all_for(self.plugins, self.plugins_dir)
         register_all_for(self.models, self.models_dir)
+
+    def __getitem__(self, name: str) -> dict[str, Any] | None:
+        import configparser
+
+        config_path = self.path / f"{name}.ini"
+        parser = configparser.ConfigParser()
+        if not os.path.exists(config_path):
+            return None
+        
+        parser.read(config_path)
+        return {section: dict(parser[section]) for section in parser.sections()}
+
+    def __setitem__(self, name: str, value: dict[str, Any]):
+        import configparser
+
+        parser = configparser.ConfigParser()
+        for section, options in value.items():
+            parser[section] = {str(k): str(v) for k, v in options.items()}
+
+        config_path = self.path / f"{name}.ini"
+        with config_path.open("w", encoding="utf-8") as f:
+            parser.write(f)
