@@ -9,16 +9,6 @@ from env import Environment
 
 if __name__ == "__main__":
     config = Config(".")
-    for filename in os.listdir(config.plugin_dir):
-        filepath = os.path.abspath(os.path.join(config.plugin_dir, filename))
-        if not filepath.startswith(os.path.abspath(config.plugin_dir)):
-            raise ValueError("Plugin outside allowed path")
-
-        if os.path.isfile(filepath):
-            print(filepath)
-            config.plugins.register(filename[:filename.rfind(".")], filepath)
-    config.plugins["hello"]
-
     conv = Conversation()
     conv.add_user("Explain quantum tunneling simply.")
     llm = OllamaLLM("magistral:latest")
