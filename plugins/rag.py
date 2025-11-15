@@ -18,4 +18,4 @@ class RAGPlugin:
 
         return ctx
 
-rag = RAGPlugin(config.models["ollama"], config.models["ollama"])
+rag = RAGPlugin(, config.models["ollama"]("magistral:latest"))

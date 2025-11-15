@@ -1,5 +1,57 @@
 from typing import Any
 from dataclasses import dataclass
+import re
+
+
+def chunk_text(
+    text: str,
+    max_tokens: int = 300,
+    overlap_tokens: int = 50,
+) -> Iterator[str]:
+    def count_tokens(s: str):
+        return len(s.split())
+
+    def split_into_sentences(text: str) -> list[str]:
+        parts = re.split(r"([.!?]\s+)", text)
+        if len(parts) == 1:
+            return [text]
+
+        sentences = []
+        for i in range(0, len(parts), 2):
+            sent = parts[i]
+            if i + 1 < len(parts):
+                sent += parts[i + 1]
+            sentences.append(sent.strip())
+        return sentences
+
+    sentences = split_into_sentences(text)
+    window: list[str] = []
+    window_tokens = 0
+
+    for sent in sentences:
+        sent_tokens = count_tokens(sent)
+
+        if window_tokens + sent_tokens > max_tokens:
+            yield " ".join(window).strip()
+
+            overlap = []
+            overlap_count = 0
+            for s in reversed(window):
+                t = count_tokens(s)
+                if overlap_count + t > overlap_tokens:
+                    break
+                overlap.append(s)
+                overlap_count += t
+            overlap.reverse()
+
+            window = overlap + [sent]
+            window_tokens = sum(count_tokens(s) for s in window)
+        else:
+            window.append(sent)
+            window_tokens += sent_tokens
+
+    if window:
+        yield " ".join(window).strip()
 
 class Context:
     def __init__(self, messages: list[dict[str, Any]] = None, metadata: dict[str, Any] = None):
@@ -29,6 +81,19 @@ class Conversation:
 
     def to_context(self) -> Context:
         return Context(messages=list(self.messages))
+    
+    def __repr__(self):
+        return f"<Conversation messages={len(self.messages)}>"
+
+    def __str__(self):
+        lines = []
+        for msg in self.messages:
+            role = msg["role"]
+            if role == "tool":
+                lines.append(f"[{msg['role']}:{msg['tool']}] {msg['content']}")
+            else:
+                lines.append(f"[{role}] {msg['content']}")
+        return "\n".join(lines)
 
 @dataclass
 class SamplingParams:

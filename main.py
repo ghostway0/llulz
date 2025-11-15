@@ -12,7 +12,9 @@ if __name__ == "__main__":
     conv.add_user("Explain quantum tunneling simply.")
     llm = config.models["ollama"]("magistral:latest")
     params = SamplingParams(temperature=0.0, max_tokens=512)
-    env = Environment(llm=llm, plugins=[]) # config.plugins["rag"]
+    env = Environment(llm=llm, plugins=[config.plugins["rag"]])
     response = env.step(conv, params)
-    print("Assistant:", response.text)
+    conv.add_user("Hey! That's great!")
+    response = env.step(conv, params)
+    print(str(conv))
 
