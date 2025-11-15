@@ -1,6 +1,6 @@
 from typing import Callable, Any
 from llm import LLM
-import os, importlib
+import os, importlib.util
 
 class PluginDirectory:
     def __init__(self, dir_name: str, config: "Config"):

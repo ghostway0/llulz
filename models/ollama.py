@@ -17,3 +17,6 @@ class OllamaLLM(LLM):
         resp.raise_for_status()
         content = resp.json()["message"]["content"]
         return Response(text=content, token_ids=None, tool_calls=[])
+
+def ollama(model: str, host: str = "http://localhost:11434") -> LLM:
+    return OllamaLLM(model)
