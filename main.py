@@ -16,14 +16,14 @@ if __name__ == "__main__":
 
         if os.path.isfile(filepath):
             print(filepath)
-            config.register_plugin(filename[:filename.rfind(".")], filepath)
-    config["hello"]
+            config.plugins.register(filename[:filename.rfind(".")], filepath)
+    config.plugins["hello"]
 
     conv = Conversation()
     conv.add_user("Explain quantum tunneling simply.")
     llm = OllamaLLM("magistral:latest")
     params = SamplingParams(temperature=0.0, max_tokens=512)
-    env = Environment(llm=llm, plugins=[])
+    env = Environment(llm=llm, plugins=[config.plugins["rag"]])
     response = env.step(conv, params)
     print("Assistant:", response.text)
 

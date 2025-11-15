@@ -1,56 +1,47 @@
-from typing import Callable
+from typing import Callable, Any
 from llm import LLM
-import types, os, importlib
+import os, importlib
 
-class ModelDirectory:
-    def __init__(self):
-        self.loaders: dict[str, Callable] = {}
-        self.loaded: dict[str, LLM] = {}
+class PluginDirectory:
+    def __init__(self, dir_name: str, config: "Config"):
+        self.paths: dict[str, str] = {}
+        self.loaded: dict[str, Any] = {}
+        self.config = config
+        self.dir_name = dir_name
 
-    def register(self, model: str, loader: Callable):
-        if model in self.loaders:
+    def register(self, name: str, filename: str):
+        if name in self.paths:
             # TODO: log warning
             pass
 
-        self.loaders[model] = loader
+        self.paths[name] = filename
 
-    def __getitem__(self, name: str) -> LLM:
-        if name in self.models:
+    def __getitem__(self, name: str) -> Any:
+        if name not in self.paths:
+             raise ValueError(f"`{name}` is not registered in {self.dir_name}")
+
+        if name not in self.loaded:
+            spec = importlib.util.spec_from_file_location(name, self.paths[name])
+            if spec is None:
+                raise ValueError(f"Could not find plugin `{name}` at {self.paths[name]}")
+
+            module = importlib.util.module_from_spec(spec)
+            module.config = self.config
+
+            spec.loader.exec_module(module)
+            self.loaded[name] = module
+
+        if hasattr(self.loaded[name], name):
+            return getattr(self.loaded[name], name)
+        else:
             return self.loaded[name]
 
-        if name not in self.loaders:
-            raise ValueError(f"`{name}` is not a known model name.")
-
-        self.models[name] = self.loaders[name](self)
-        return self.models[name]
 
 class Config:
     def __init__(self, path: str):
-        self.directory = ModelDirectory()
         self.path = path
+        self.plugins = PluginDirectory("plugins", self)
+        self.models = PluginDirectory("models", self)
         self.plugin_dir = os.path.join(self.path, "plugins")
-        self.plugins: dict[str, types.ModuleType | str] = {}
-
-    def register_plugin(self, name: str, filename: str):
-        self.plugins[name] = filename
-
-    def __getitem__(self, name: str) -> types.ModuleType:
-        if name not in self.plugins:
-             raise ValueError(f"Plugin {name} not registered")
-
-        if isinstance(self.plugins[name], str):
-            spec = importlib.util.spec_from_file_location(name, self.plugins[name])
-            if spec is None:
-                raise ValueError(f"Could not find plugin {name} at {self.plugins[name]}")
-
-            module = importlib.util.module_from_spec(spec)
-            module.config = self
-
-            spec.loader.exec_module(module)
-            self.plugins[name] = module
-
-        if hasattr(self.plugins[name], name):
-            return getattr(self.plugins[name], name)
-        else:
-            return self.plugins[name]
+        # self.plugins: dict[str, types.ModuleType | str] = {}
 

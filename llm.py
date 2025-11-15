@@ -53,5 +53,5 @@ class LLM:
     def generate(self, context: Context, params: SamplingParams) -> Response:
         raise NotImplementedError
 
-    def embed(self, texts: list[str]) -> list[list[float]]:
+    def encode(self, texts: list[str]) -> list[list[float]]:
         raise NotImplementedError
