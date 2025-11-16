@@ -12,11 +12,10 @@ class RAGPlugin:
         query = ctx.messages[-1]["content"]
         vec = np.array(self.embedder.encode([query])[0], dtype=np.float32)
         D, I = self.index.search(vec, self.k)
-        print(D, I)
         retrieved_chunks = [self.index.data[i] for i in I if i >= 0]
 
         if retrieved_chunks:
-            ctx.add_message("tool", "\n".join(retrieved_chunks))
+            ctx.add_context("tool", "\n".join(retrieved_chunks))
 
         return ctx
 
@@ -25,6 +24,7 @@ class Indexer:
         self.dim = dim
         self.metric = metric
         self.index = AnnoyIndex(dim, metric)
+        # TODO: this is for testing purposes. eventually this should be in storage
         self.data: list[str] = []
         self._built = False
 

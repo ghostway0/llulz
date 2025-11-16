@@ -11,8 +11,13 @@ class OllamaLLM(LLM):
             "model": self.model,
             "messages": context.messages,
             "stream": False,
-            "options": {"num_ctx": params.max_context, "temperature": params.temperature}
+            "options": {
+                "num_ctx": params.max_context,
+                "num_predict": params.max_tokens,
+                "temperature": params.temperature
+            }
         }
+        print(context.messages)
         resp = requests.post(self.host + "/api/chat", json=payload)
         resp.raise_for_status()
         content = resp.json()["message"]["content"]

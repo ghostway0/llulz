@@ -66,9 +66,20 @@ class Context:
             msg["target"] = target
         self.messages.append(msg)
 
+    def add_context(self, role: str, content: str, tool: str = None, target: str = None):
+        msg = {"role": role, "content": content}
+        if tool:
+            msg["tool"] = tool
+        if target:
+            msg["target"] = target
+        self.messages.insert(len(self.messages) - 1, msg)
+
 class Conversation:
     def __init__(self):
         self.messages: list[dict[str, Any]] = []
+
+    def add(self, message: dict[str, Any]):
+        self.messages.append(message)
 
     def add_user(self, text: str):
         self.messages.append({"role": "user", "content": text})
@@ -90,9 +101,9 @@ class Conversation:
         for msg in self.messages:
             role = msg["role"]
             if role == "tool":
-                lines.append(f"[{msg['role']}:{msg['tool']}] {msg['content']}")
+                lines.append(f"[{msg['role']}:{msg['tool']}]\n{msg['content']}")
             else:
-                lines.append(f"[{role}] {msg['content']}")
+                lines.append(f"[{role}]\n{msg['content']}")
         return "\n".join(lines)
 
 @dataclass
