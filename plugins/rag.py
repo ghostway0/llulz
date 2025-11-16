@@ -66,6 +66,7 @@ class Indexer:
 if config["rag"] is None:
     config["rag"] = {}
 
-index = Indexer(len(config.models["ollama"]("magistral:latest").encode(["Hello"])[0]))
-index.add(config.models["ollama"]("magistral:latest").encode(["Hello"])[0], "Hello")
+model = config.models["ollama"]("magistral:latest")
+index = Indexer(len(model.encode(["Hello"])[0]))
+index.add(model.encode(["Hello"])[0], "Hello")
 rag = RAGPlugin(index, config.models["ollama"]("magistral:latest"))
