@@ -58,7 +58,7 @@ class Context:
         self.messages = messages or []
         self.metadata = metadata or {}
 
-    def add_message(self, role: str, content: str, tool: str = None, target: str = None):
+    def replace(self, role: str, content: str, tool: str = None, target: str = None):
         msg = {"role": role, "content": content}
         if tool:
             msg["tool"] = tool
@@ -66,7 +66,7 @@ class Context:
             msg["target"] = target
         self.messages.append(msg)
 
-    def add_context(self, role: str, content: str, tool: str = None, target: str = None):
+    def add(self, role: str, content: str, tool: str = None, target: str = None):
         msg = {"role": role, "content": content}
         if tool:
             msg["tool"] = tool
@@ -127,6 +127,9 @@ class Response:
 
 class LLM:
     def generate(self, context: Context, params: SamplingParams) -> Response:
+        raise NotImplementedError
+
+    def generate_stream(self, context: Context, params: SamplingParams) -> str | Response:
         raise NotImplementedError
 
     def encode(self, texts: list[str]) -> list[list[float]]:

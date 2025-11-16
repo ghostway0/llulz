@@ -6,6 +6,40 @@ class OllamaLLM(LLM):
         self.model = model
         self.host = host
 
+    def generate_stream(self, context: Context, params: SamplingParams) -> str | Response:
+        payload = {
+            "model": self.model,
+            "messages": context.messages,
+            "stream": True,
+            "options": {
+                "num_ctx": params.max_context,
+                "num_predict": params.max_tokens,
+                "temperature": params.temperature,
+            },
+        }
+
+        with requests.post(self.host + "/api/chat", json=payload, stream=True) as resp:
+            resp.raise_for_status()
+            buffer = []
+
+            for line in resp.iter_lines(decode_unicode=True):
+                if not line:
+                    continue
+
+                try:
+                    data = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+
+                delta = data.get("message", {}).get("content")
+                if delta:
+                    buffer.append(delta)
+                    yield delta
+
+            final_text = "".join(buffer)
+            yield Response(text=final_text, token_ids=None, tool_calls=[])
+
+
     def generate(self, context: Context, params: SamplingParams) -> Response:
         payload = {
             "model": self.model,
@@ -17,7 +51,6 @@ class OllamaLLM(LLM):
                 "temperature": params.temperature
             }
         }
-        print(context.messages)
         resp = requests.post(self.host + "/api/chat", json=payload)
         resp.raise_for_status()
         content = resp.json()["message"]["content"]

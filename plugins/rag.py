@@ -15,7 +15,7 @@ class RAGPlugin:
         retrieved_chunks = [self.index.data[i] for i in I if i >= 0]
 
         if retrieved_chunks:
-            ctx.add_context("tool", "\n".join(retrieved_chunks))
+            ctx.add("tool", "RAG relevant content:\n" + "\n".join(retrieved_chunks))
 
         return ctx
 

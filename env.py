@@ -8,10 +8,8 @@ class Environment:
         self.llm = llm
         self.plugins = plugins or []
 
-    def step(self, conv: Conversation, params: SamplingParams) -> Response:
+    def step(self, conv: Conversation) -> Context:
         ctx = conv.to_context()
         for plugin in self.plugins:
             ctx = plugin(conv, ctx)
-        response = self.llm.generate(ctx, params)
-        conv.add_assistant(response.text)
-        return response
+        return ctx
