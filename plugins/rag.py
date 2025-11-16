@@ -21,8 +21,6 @@ class RAGPlugin:
 
 class Indexer:
     def __init__(self, dim: int, metric: str = "angular"):
-        self.dim = dim
-        self.metric = metric
         self.index = AnnoyIndex(dim, metric)
         # TODO: this is for testing purposes. eventually this should be in storage
         self.data: list[str] = []
@@ -68,6 +66,6 @@ class Indexer:
 if config["rag"] is None:
     config["rag"] = {}
 
-index = Indexer(5120)
+index = Indexer(len(config.models["ollama"]("magistral:latest").encode(["Hello"])[0]))
 index.add(config.models["ollama"]("magistral:latest").encode(["Hello"])[0], "Hello")
 rag = RAGPlugin(index, config.models["ollama"]("magistral:latest"))
