@@ -1,4 +1,4 @@
-from typing import Callable, Any
+from typing import Callable
 from llm import LLM
 from pathlib import Path
 import os, importlib.util
@@ -6,7 +6,7 @@ import os, importlib.util
 class PluginDirectory:
     def __init__(self, dir_name: str, config: "Config"):
         self.paths: dict[str, str] = {}
-        self.loaded: dict[str, Any] = {}
+        self.loaded: dict[str, any] = {}
         self.config = config
         self.dir_name = dir_name
 
@@ -17,7 +17,7 @@ class PluginDirectory:
 
         self.paths[name] = filename
 
-    def __getitem__(self, name: str) -> Any:
+    def __getitem__(self, name: str) -> any:
         if name not in self.paths:
              raise ValueError(f"`{name}` is not registered in {self.dir_name}")
 
@@ -60,7 +60,7 @@ class Config:
         register_all_for(self.plugins, self.plugins_dir)
         register_all_for(self.models, self.models_dir)
 
-    def __getitem__(self, name: str) -> dict[str, Any] | None:
+    def __getitem__(self, name: str) -> dict[str, any] | None:
         import configparser
 
         config_path = self.path / f"{name}.ini"
@@ -71,7 +71,7 @@ class Config:
         parser.read(config_path)
         return {section: dict(parser[section]) for section in parser.sections()}
 
-    def __setitem__(self, name: str, value: dict[str, Any]):
+    def __setitem__(self, name: str, value: dict[str, any]):
         import configparser
 
         parser = configparser.ConfigParser()

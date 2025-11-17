@@ -1,4 +1,4 @@
-from llm import Conversation, Context, chunk_text
+from llm import Conversation, chunk_text
 from annoy import AnnoyIndex
 import numpy as np
 
@@ -8,16 +8,16 @@ class RAGPlugin:
         self.embedder = embedder
         self.k = k
 
-    def __call__(self, conv: Conversation, ctx: Context) -> Context:
-        query = ctx.messages[-1]["content"]
+    def __call__(self, conv: Conversation) -> Conversation:
+        query = conv.messages[-1]["content"]
         vec = np.array(self.embedder.encode([query])[0], dtype=np.float32)
         D, I = self.index.search(vec, self.k)
         retrieved_chunks = [self.index.data[i] for i in I if i >= 0]
 
         if retrieved_chunks:
-            ctx.add("tool", "RAG relevant content:\n" + "\n".join(retrieved_chunks))
+            conv.add_before(conv.curr_msgid, {"role": "tool", "content": "RAG relevant content:\n" + "\n".join(retrieved_chunks)})
 
-        return ctx
+        return conv
 
 class Indexer:
     def __init__(self, dim: int, metric: str = "angular"):

@@ -1,15 +1,15 @@
 import requests, json
-from llm import SamplingParams, LLM, Response, Context
+from llm import SamplingParams, LLM, Response
 
 class OllamaLLM(LLM):
     def __init__(self, model: str, host: str = "http://localhost:11434"):
         self.model = model
         self.host = host
 
-    def generate_stream(self, context: Context, params: SamplingParams) -> str | Response:
+    def generate_stream(self, context: list[dict[str, any]], params: SamplingParams) -> str | Response:
         payload = {
             "model": self.model,
-            "messages": context.messages,
+            "messages": context,
             "stream": True,
             "options": {
                 "num_ctx": params.max_context,
@@ -40,10 +40,10 @@ class OllamaLLM(LLM):
             yield Response(text=final_text, token_ids=None, tool_calls=[])
 
 
-    def generate(self, context: Context, params: SamplingParams) -> Response:
+    def generate(self, context: list[dict[str, any]], params: SamplingParams) -> Response:
         payload = {
             "model": self.model,
-            "messages": context.messages,
+            "messages": context,
             "stream": False,
             "options": {
                 "num_ctx": params.max_context,

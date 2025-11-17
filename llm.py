@@ -53,33 +53,20 @@ def chunk_text(
     if window:
         yield " ".join(window).strip()
 
-class Context:
-    def __init__(self, messages: list[dict[str, Any]] = None, metadata: dict[str, Any] = None):
-        self.messages = messages or []
-        self.metadata = metadata or {}
-
-    def replace(self, role: str, content: str, tool: str = None, target: str = None):
-        msg = {"role": role, "content": content}
-        if tool:
-            msg["tool"] = tool
-        if target:
-            msg["target"] = target
-        self.messages.append(msg)
-
-    def add(self, role: str, content: str, tool: str = None, target: str = None):
-        msg = {"role": role, "content": content}
-        if tool:
-            msg["tool"] = tool
-        if target:
-            msg["target"] = target
-        self.messages.insert(len(self.messages) - 1, msg)
-
 class Conversation:
     def __init__(self):
         self.messages: list[dict[str, Any]] = []
+        self.metadata: dict[int, list[dict]] = {}
+
+    @property
+    def curr_msgid(self) -> int:
+        return len(self.messages) - 1
 
     def add(self, message: dict[str, Any]):
         self.messages.append(message)
+
+    def add_meta(self, msg_id: int, data: dict):
+        self.metadata.setdefault(msg_id, []).append(data)
 
     def add_user(self, text: str):
         self.messages.append({"role": "user", "content": text})
@@ -90,9 +77,15 @@ class Conversation:
     def add_tool(self, tool_name: str, output: str, target: str = "global"):
         self.messages.append({"role": "tool", "tool": tool_name, "content": output, "target": target})
 
-    def to_context(self) -> Context:
-        return Context(messages=list(self.messages))
-    
+    def add_before(self, msg_id: int, msg: dict[str, any]):
+        self.messages.insert(msg_id, msg)
+
+    def add_after(self, msg_id: int, msg: dict[str, any]):
+        self.messages.insert(msg_id + 1, msg)
+
+    def to_context(self) -> list[dict[str, any]]:
+        return list(self.messages)
+
     def __repr__(self):
         return f"<Conversation messages={len(self.messages)}>"
 
@@ -126,10 +119,10 @@ class Response:
     tool_calls: list[ToolCall] = None
 
 class LLM:
-    def generate(self, context: Context, params: SamplingParams) -> Response:
+    def generate(self, ctx: list[dict[str, any]], params: SamplingParams) -> Response:
         raise NotImplementedError
 
-    def generate_stream(self, context: Context, params: SamplingParams) -> str | Response:
+    def generate_stream(self, ctx: list[dict[str, any]], params: SamplingParams) -> str | Response:
         raise NotImplementedError
 
     def encode(self, texts: list[str]) -> list[list[float]]:
